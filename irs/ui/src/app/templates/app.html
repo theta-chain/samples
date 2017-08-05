@@ -1,0 +1,31 @@
+
+<nav class="navbar navbar-default navbar-fixed-top">
+	<div class="container">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed"
+				data-toggle="collapse" data-target="#navbar" aria-expanded="false"
+				aria-controls="navbar">
+				<span class="sr-only">Toggle navigation</span> <span
+					class="icon-bar"></span> <span class="icon-bar"></span> <span
+					class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="#"><img src="images/logo.png"
+				style="display: inline"> Theta-Chain Demo </a>
+		</div>
+		<div id="navbar" class="navbar-collapse collapse">
+			<ul class="nav navbar-nav navbar-right">
+				<li class="active"*ngIf="appState"><a href="">{{appState.NodeName}}</a></li> 
+				<li><a href="#/irs">Interest Rate Swaps</a></li>
+				<li><a href="#/sysstate">System State</a></li>
+				<li><a href="#/dbstate">Database</a></li>
+			</ul>
+		</div>
+		<!--/.navbar-collapse -->
+	</div>
+</nav>
+
+<!-- Main jumbotron for a primary marketing message or call to action -->
+<div class="container" id="mainContent">
+	<router-outlet></router-outlet>
+</div>
+<!-- /container -->

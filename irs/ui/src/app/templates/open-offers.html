@@ -1,0 +1,173 @@
+<div class="panel panel-default">
+	<div class="panel-heading">
+		Offers
+		<button class="btn pull-right btn-warning btn-sm" type="submit"
+			(click)="newTrade()">New Trade</button>
+	</div>
+	<div class="panel-body"  style="overflow-x:auto;">
+			<table class="table table-responsive" id="tblOffers" >
+				<thead>
+					<tr>
+						<th></th>
+						<th>Proposed By</th>
+						<th>Trade Id</th>
+						<th>Buyer Id</th>
+						<th>Seller Id</th>
+						<th>Notional Amt</th>
+						<th>Start Date</th>
+						<th>Maturity Date</th>
+						<th>Fixed Rate</th>
+						<th>Floating Rate Index</th>
+						<th>Spread</th>
+						<th>Coupon Frequency</th>
+					</tr>
+				</thead>
+				<tbody *ngFor="let offer of offers">
+					<tr class="active">
+						<td><button class="btn btn-sm btn-warning" *ngIf="offer.proposedBy == appState.NodeName"
+								(click)="proposeEdits(offer)">Edit</button></td>
+						<td>{{offer.proposedBy}}</td>
+						<td>{{offer.contractId}}</td>
+						<td>{{offer.buyerId}}</td>
+						<td>{{offer.sellerId}}</td>
+						<td>{{offer.notionalAmount}}</td>
+						<td>{{offer.startDate}}</td>
+						<td>{{offer.maturityDate}}</td>
+						<td>{{offer.fixedLegRate}}</td>
+						<td>{{offer.floatingRateIndex}}</td>
+						<td>{{offer.spread}}</td>
+						<td>{{offer.couponFreq}}</td>
+					</tr>
+				</tbody>
+			</table>
+		
+	</div>
+</div>
+
+<!-- 
+
+					<tr class="active" >
+						<td colspan="9" ><button *ngIf="opair.myOffer" class="btn btn-sm btn-warning"
+								(click)="proposeEdits(opair.counterOffer)">Accept
+								Changes</button>
+							<button *ngIf="opair.myOffer" class="btn btn-sm btn-warning"
+								(click)="proposeEdits(opair.myOffer)">Edit</button></td>
+					</tr>
+ -->
+<div class="modal fade" id="newTrade" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"
+					aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="myModalLabel">New Trade</h4>
+			</div>
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="col-md-4">
+							<label>Contract id</label>
+						</div>
+						<div class="col-md-4">
+							<label>Buyer Id</label>
+						</div>
+						<div class="col-md-4">
+							<label>Seller Id</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalOffer.contractId">
+						</div>
+						<div class="col-md-4">
+							<select name="buyerId" [(ngModel)]="modalOffer.buyerId"
+								class="form-control">
+								<option value="" disabled>Choose an Org</option>
+								<option *ngFor="let peer of appState.Peers"
+									[ngValue]="peer.NodeName">{{ peer.NodeName }}</option>
+							</select>
+						</div>
+						<div class="col-md-4">
+							<select name="modalOffer.sellerId"
+								[(ngModel)]="modalOffer.sellerId" class="form-control">
+								<option value="" disabled>Choose an Org</option>
+								<option *ngFor="let peer of appState.Peers"
+									[ngValue]="peer.NodeName">{{ peer.NodeName }}</option>
+							</select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<label>Fixed Rate</label>
+						</div>
+						<div class="col-md-4">
+							<label>Float Index</label>
+						</div>
+						<div class="col-md-4">
+							<label>Spread</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalOffer.fixedLegRate">
+						</div>
+						<div class="col-md-4">
+							<input type="email" class="form-control"
+								[(ngModel)]="modalOffer.floatingRateIndex">
+						</div>
+						<div class="col-md-4">
+							<input type="email" class="form-control"
+								[(ngModel)]="modalOffer.spread">
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<label>Notional Amt</label>
+						</div>
+						<div class="col-md-4">
+							<label>Start Date</label>
+						</div>
+						<div class="col-md-4">
+							<label>Maturity Date</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalOffer.notionalAmount">
+						</div>
+						<div class="col-md-4">
+							<input type="email" class="form-control"
+								[(ngModel)]="modalOffer.startDate">
+						</div>
+						<div class="col-md-4">
+							<input type="email" class="form-control"
+								[(ngModel)]="modalOffer.maturityDate">
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<label>Frequency</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-4">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalOffer.couponFreq">
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<button type="button" class="btn btn-primary" (click)="modalOK()">OK</button>
+		</div>
+	</div>
+</div>
+
+

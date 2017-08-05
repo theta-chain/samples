@@ -1,0 +1,12 @@
+{
+        "validatingPeers": ["DevOrg"],
+        "proposal": {
+                "contractId": "addInterestRate",
+                "moduleId" : "irs",
+                "parameters": {
+                        "indexName": "LIBOR-6Month",
+                        "interestRate": "1.623",
+                        "validForDate": "2017-07-30"
+                }
+        }
+}

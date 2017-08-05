@@ -1,0 +1,35 @@
+version: '3'
+services:
+  node1:
+    container_name: node1
+    image: thetachain/alpha:latest
+    environment:
+     - IS_FIRST_NODE=true
+     - NODE_NAME=node1
+     - DEBUG_CONTRACTS=true
+    ports:
+     - "5520:5520"
+     - "5521:5521"
+     - "5522:5522"
+     - "5530:5530"
+    volumes:
+     - ./data/node1:/usr/local/thetachain/env
+     - java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
+  node2:
+    container_name: node2
+    image: thetachain/alpha:latest
+    environment:
+     - CONNECT_TO_NODE=true
+     - CLUSTER_ADDR=node1:5521
+     - NODE_NAME=node2
+     - DEBUG_CONTRACTS=true
+    ports:
+     - "4420:5520"
+     - "4421:5521"
+     - "4422:5522"
+     - "4430:5530"
+    volumes:
+     - ./data/node2:/usr/local/thetachain/env
+     - java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
+    links:
+    - node1

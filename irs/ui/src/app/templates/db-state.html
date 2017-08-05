@@ -1,0 +1,99 @@
+
+<div style="margin-top: 30px">
+
+	<!-- Nav tabs -->
+	<ul class="nav nav-tabs" role="tablist">
+		<li role="presentation" class="active"><a href="#tables"
+			aria-controls="tables" role="tab" data-toggle="tab">Tables</a></li>
+		<li role="presentation"><a href="#hashes" aria-controls="hashes"
+			role="tab" data-toggle="tab">Hashes</a></li>
+	</ul>
+
+	<!-- Tab panes -->
+	<div class="tab-content">
+		<div role="tabpanel" class="tab-pane active" id="tables">
+
+			<div *ngIf="schema" class="container-fluid" style="margin-top: 20px">
+				<div class="row">
+					<div class="col-md-2">
+						<h4>
+							<span class="label label-default">Select Table To Load</span>
+						</h4>
+					</div>
+					<div class="col-md-4">
+						<select name="db.tablename" [(ngModel)]="selectedTableName"
+							class="form-control">
+							<option value="" disabled>Choose a Table</option>
+							<option *ngFor="let table of schema.table" [ngValue]="table.name">{{table.name}}</option>
+						</select>
+
+					</div>
+					<div class="col-md-4">
+						<button class="btn btn-md btn-warning" (click)="loadData()">Load
+							Data</button>
+					</div>
+				</div>
+			</div>
+
+			<div *ngIf="tableData">
+				<table class="table table-responsive" id="tblOffers">
+					<thead>
+						<tr>
+							<th *ngFor="let col of tableData.ColumnNames">{{col}}</th>
+						</tr>
+						<tr *ngFor="let row of tableData.Data">
+							<td *ngFor="let col of row">{{col}}</td>
+						</tr>
+					</thead>
+				</table>
+			</div>
+
+
+		</div>
+		<div role="tabpanel" class="tab-pane" id="hashes">
+			<div style="margin-top: 50px">
+				<button class="btn btn-md btn-warning " (click)="reloadHashes()">Refresh
+					Data</button>
+			</div>
+			<div *ngIf="schema">
+				<div class="container-fluid" style="margin-top: 50px"
+					*ngFor="let transaction of transactionHashData">
+					<div class="row" style="border-bottom: 2px solid white;margin-bottom: 10px">
+						<div class="col-md-10">
+							
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-2">AsOf:</div>
+						<div class="col-md-4">{{transaction.AsOf}}</div>
+					</div>
+					<div class="row">
+						<div class="col-md-2">Hash:</div>
+						<div class="col-md-4">{{transaction.WriteSet.WriteSetHash}}</div>
+					</div>
+					<div *ngFor="let table of transaction.WriteSet.tableChanges">
+						<div class="row" style="margin-top: 10px">
+							<div class="col-md-2"></div>
+							<div class="col-md-1">TableId:</div>
+							<div class="col-md-4">{{table.tableId}}</div>
+						</div>
+						<div class="row">
+							<div class="col-md-2"></div>
+							<div class="col-md-2">Rows:</div>
+						</div>
+						<div class="row"  style="margin-bottom: 10px">
+							<div class="col-md-2"></div>
+							<div class="col-md-8">
+								<ul>
+									<li *ngFor="let rowHash of table.rowHash">{{rowHash}}</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+

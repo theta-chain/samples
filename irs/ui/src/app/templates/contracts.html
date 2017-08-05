@@ -1,0 +1,35 @@
+<div class="panel panel-default">
+	<div class="panel-heading">Open Contracts</div>
+	<div class="panel-body">
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Trade Id</th>
+					<th>Buyer Id</th>
+					<th>Seller Id</th>
+					<th>Notional Amt</th>
+					<th>Start Date</th>
+					<th>Maturity Date</th>
+					<th>Fixed Rate</th>
+					<th>Floating Rate Index</th>
+					<th>Spread</th>
+					<th>Coupon Frequency</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr class="active" *ngFor="let contract of contracts">
+					<td>{{contract.contractId}}</td>
+					<td>{{contract.buyerId}}</td>
+					<td>{{contract.sellerId}}</td>
+					<td>{{contract.notionalAmount}}</td>
+					<td>{{contract.startDate}}</td>
+					<td>{{contract.maturityDate}}</td>
+					<td>{{contract.fixedLegRate}}</td>
+					<td>{{contract.floatingRateIndex}}</td>
+					<td>{{contract.spread}}</td>
+					<td>{{contract.couponFreq}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
