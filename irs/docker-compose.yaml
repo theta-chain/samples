@@ -14,7 +14,7 @@ services:
      - "5530:5530"
     volumes:
      - ./data/node1:/usr/local/thetachain/env
-     - java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
+     - ./java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
   node2:
     container_name: node2
     image: thetachain/alpha:latest
@@ -30,6 +30,6 @@ services:
      - "4430:5530"
     volumes:
      - ./data/node2:/usr/local/thetachain/env
-     - java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
+     - ./java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
     links:
     - node1
