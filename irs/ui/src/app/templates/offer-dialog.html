@@ -1,0 +1,65 @@
+<div class="newInterestRateDialog">
+	<md-dialog-content>
+	<div class="container-fluid" id="prtTable">
+		<div class="row">
+			<div class="col-md-4">
+				<md-input-container> <input mdInput placeholder="Contract Id" [(ngModel)]="modalOffer.contractId"></md-input-container>
+			</div>
+			<div class="col-md-4">
+				<div class="mat-select-wrapper">
+					<md-select placeholder="BuyerId" [(ngModel)]="modalOffer.buyerId"> <md-option *ngFor="let peer of peers" [value]="peer.NodeName">{{peer.NodeName}}</md-option> </md-select>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="mat-select-wrapper">
+					<md-select placeholder="SellerId" [(ngModel)]="modalOffer.sellerId"> <md-option *ngFor="let peer of peers" [value]="peer.NodeName">{{peer.NodeName}}</md-option> </md-select>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-4">
+				<md-input-container> <input mdInput placeholder="Fixed Rate" [(ngModel)]="modalOffer.fixedLegRate"> </md-input-container>
+			</div>
+			<div class="col-md-4">
+				<md-input-container> <input type="text" placeholder="Index" mdInput [(ngModel)]="modalOffer.floatingRateIndex"> </md-input-container>
+			</div>
+			<div class="col-md-4">
+				<md-input-container> <input type="email" placeholder="Spread" mdInput [(ngModel)]="modalOffer.spread"> </md-input-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-4">
+				<md-input-container> <input mdInput placeholder="Notional Amt" [(ngModel)]="modalOffer.notionalAmount"> </md-input-container>
+			</div>
+			<div class="col-md-4">
+				<md-input-container> <input mdInput [(ngModel)]="modalOffer.startDate" placeholder="Start Date" [mdDatepicker]="offerStartDatepicker">
+				<button mdSuffix [mdDatepickerToggle]="offerStartDatepicker"></button>
+				</md-input-container>
+				<md-datepicker #offerStartDatepicker></md-datepicker>
+			</div>
+			<div class="col-md-4">
+				<md-input-container> <input mdInput [(ngModel)]="modalOffer.maturityDate" placeholder="Maturity Date" [mdDatepicker]="offerMatDatepicker">
+				<button mdSuffix [mdDatepickerToggle]="offerMatDatepicker"></button>
+				</md-input-container>
+				<md-datepicker #offerMatDatepicker></md-datepicker>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-8"></div>
+			<div class="col-md-4">
+				<div class="mat-select-wrapper">
+					<md-select placeholder="Frequency" [(ngModel)]="modalOffer.couponFreq"> <md-option value="Monthly">Monthly</md-option> <md-option value="Quarterly">Quarterly</md-option> <md-option
+						value="Half-Yearly">Half-Yearly</md-option> <md-option value="Yearly">Yearly</md-option> </md-select>
+				</div>
+			</div>
+		</div>
+	</div>
+	</md-dialog-content>
+	<md-dialog-actions>
+	<button md-button (click)="addNewOffer()">Add</button>
+	<button md-button [md-dialog-close]="false">Cancel</button>
+	<div style="width: 100%" *ngIf="showProgress">
+		<md-progress-bar [color]="'warn'" [mode]="'indeterminate'"></md-progress-bar>
+	</div>
+	</md-dialog-actions>
+</div>

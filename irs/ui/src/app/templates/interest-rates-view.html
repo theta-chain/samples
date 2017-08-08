@@ -1,0 +1,90 @@
+<div class="panel panel-default">
+	<div class="panel-heading">
+		Interest Rates
+		<button md-raised-button type="submit"  class="primary-button"
+			(click)="newRate()">New Interest Rate</button>
+	</div>
+	<div class="panel-body" style="overflow-x: auto;">
+		<table class="table table-responsive" id="tblOffers">
+			<thead>
+				<tr class="active">
+					<th>Index Name</th>
+					<th>Index Type</th>
+					<th>Rate</th>
+					<th>Date</th>
+				</tr>
+			</thead>
+			<tbody *ngFor="let rate of knownRates">
+				<tr >
+					<td>{{rate.indexName}}</td>
+					<td>
+						{{rate.period}}
+					</td>
+					<td>
+						{{rate.interestRate|number: '1.2-4'}}
+					</td>
+					<td>
+						{{rate.validForDate| date: 'MM/dd/yyyy'}}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+</div>
+
+<div class="modal fade" id="newRate" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"
+					aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title" id="myModalLabel">New Interest Rate</h4>
+			</div>
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="row">
+						<div class="col-md-3">
+							<label>Index Name</label>
+						</div>
+						<div class="col-md-3">
+							<label>Period</label>
+						</div>
+						<div class="col-md-3">
+							<label>Interest Rate</label>
+						</div>
+						<div class="col-md-3">
+							<label>Valid For Date</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-md-3">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalRate.indexName">
+						</div>
+						<div class="col-md-3">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalRate.period">
+						</div>
+						<div class="col-md-3">
+							<input type="text" class="form-control"
+								[(ngModel)]="modalRate.interestRate">
+						</div>
+						<div class="col-md-3">
+							<input [mdDatepicker]="myDatepicker" type="text" class="form-control"
+								[(ngModel)]="modalRate.validForDate">
+							<button [mdDatepickerToggle]="myDatepicker"></button>
+							<md-datepicker #myDatepicker></md-datepicker>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+			<button type="button" class="btn btn-primary" (click)="modalOK()">OK</button>
+		</div>
+	</div>
+</div>

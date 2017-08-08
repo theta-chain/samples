@@ -4,9 +4,9 @@
                 "contractId": "addInterestRate",
                 "moduleId" : "irs",
                 "parameters": {
-                        "indexName": "LIBOR-6Month",
-                        "interestRate": "1.623",
-                        "validForDate": "2017-07-30"
+                        "indexName": "LIBOR-Monthly",
+                        "interestRate": "1.523",
+                        "validForDate": "2017-08-01"
                 }
         }
 }

@@ -11,6 +11,37 @@ APP_NODE_NAME = "UNKNOWN"
 
 app = Flask(__name__,static_url_path='')
 
+def valuesToString(map):
+    for key,value in map.iteritems():
+        if not isinstance(value, basestring):
+            map[key] = str(value)
+        pass
+    pass
+    return map
+pass
+
+def selectAllInterestRates(conn):
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        cursor.execute("SELECT * FROM IRS_INTEREST_RATE ORDER BY VALID_FOR_DATE DESC")
+        rv = []
+        for row in cursor:
+            print("Reading Row %s "%row)
+            obj = {
+                'indexName': row["INDEX_NAME"],
+                'period': row["PERIOD"],
+                'interestRate': float(row['INTEREST_RATE']),
+                'validForDate': str(row['VALID_FOR_DATE'])
+            }
+            rv.append(obj)
+        return rv
+    finally:
+        cursor.close()
+    pass
+    
+
+
+
 def selectAllOffers(conn):
     cursor = conn.cursor(pymysql.cursors.DictCursor)
     try:
@@ -23,10 +54,10 @@ def selectAllOffers(conn):
                 'contractId': row['CONTRACT_ID'],
                 'buyerId': row['BUYER_ID'],
                 'sellerId': row['SELLER_ID'],
-                'fixedLegRate': str(row['FIXED_LEG_RATE']),
+                'fixedLegRate': float(row['FIXED_LEG_RATE']),
                 'floatingRateIndex': row['FLOATING_RATE_INDEX'],
-                'spread': str(row['FLOATING_RATE_SPREAD']),
-                'notionalAmount': str(row['NOTIONAL_AMOUNT']),
+                'spread': float(row['FLOATING_RATE_SPREAD']),
+                'notionalAmount': float(row['NOTIONAL_AMOUNT']),
                 'startDate': str(row['START_DATE']),
                 'maturityDate': str(row['MATURITY_DATE']),
                 'couponFreq': str(row['COUPON_FREQUENCY']),
@@ -49,20 +80,78 @@ def selectAllContracts(conn):
                 'contractId': row['CONTRACT_ID'],
                 'buyerId': row['BUYER_ID'],
                 'sellerId': row['SELLER_ID'],
-                'fixedLegRate': str(row['FIXED_LEG_RATE']),
+                'fixedLegRate': float(row['FIXED_LEG_RATE']),
                 'floatingRateIndex': row['FLOATING_RATE_INDEX'],
-                'spread': str(row['FLOATING_RATE_SPREAD']),
-                'notionalAmount': str(row['NOTIONAL_AMOUNT']),
+                'spread': float(row['FLOATING_RATE_SPREAD']),
+                'notionalAmount': float(row['NOTIONAL_AMOUNT']),
                 'startDate': str(row['START_DATE']),
                 'maturityDate': str(row['MATURITY_DATE']),
                 'couponFreq': str(row['COUPON_FREQUENCY']),
+                'nextPaymentDate':str(row['NEXT_PAYMENT_DATE'])
             }
+            if  row['PREV_PAYMENT_DATE'] != None:
+                obj['prevPaymentDate'] = str(row['PREV_PAYMENT_DATE'])
             rv.append(obj)
         return rv
     finally:
         cursor.close()
     pass
     
+def selectContractDetails(conn,contractPath):
+    tmpPathComponents = contractPath.split(':')
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        cursor.execute("SELECT * FROM irs_contract WHERE CONTRACT_ID = '%s' AND BUYER_ID = '%s' AND SELLER_ID = '%s'"%(tmpPathComponents[0],tmpPathComponents[1],tmpPathComponents[2]))
+        rv = []
+        for row in cursor:
+            obj = {
+                'contractId': row['CONTRACT_ID'],
+                'buyerId': row['BUYER_ID'],
+                'sellerId': row['SELLER_ID'],
+                'fixedLegRate': float(row['FIXED_LEG_RATE']),
+                'floatingRateIndex': row['FLOATING_RATE_INDEX'],
+                'spread': float(row['FLOATING_RATE_SPREAD']),
+                'notionalAmount': float(row['NOTIONAL_AMOUNT']),
+                'startDate': str(row['START_DATE']),
+                'maturityDate': str(row['MATURITY_DATE']),
+                'couponFreq': str(row['COUPON_FREQUENCY']),
+                'nextPaymentDate':str(row['NEXT_PAYMENT_DATE'])
+            }
+            if  row['PREV_PAYMENT_DATE'] != None:
+                obj['prevPaymentDate'] = str(row['PREV_PAYMENT_DATE'])
+            rv.append(obj)
+        pass
+        loadPaymentFlows(conn,rv[0])
+        return rv[0]
+    finally:
+        cursor.close()
+    pass
+pass
+
+def loadPaymentFlows(conn,contract):
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        cursor.execute("SELECT * FROM irs_contract_flows WHERE CONTRACT_ID = '%s' AND BUYER_ID = '%s' AND SELLER_ID = '%s' ORDER BY PAYMENT_DUE_DATE DESC "%(contract['contractId'],contract['buyerId'],contract['sellerId']))
+        rv = []
+        for row in cursor:
+            obj = {
+                'contractId': row['CONTRACT_ID'],
+                'buyerId': row['BUYER_ID'],
+                'sellerId': row['SELLER_ID'],
+                'fixedLegAmount': float(row['FIXED_LEG_AMOUNT']),
+                'floatLegAmount': float(row['FLOAT_LEG_AMOUNT']),
+                'netAmount': float(row['NET_AMOUNT']),
+                'paymentDueDate': str(row['PAYMENT_DUE_DATE']),
+                'paymentRemittanceDate': str(row['PAYMENT_REMITTANCE_DATE']),
+                'paymentReferenceId': str(row['PAYMENT_REFERENCE_ID'])
+            }
+            rv.append(obj)
+        pass
+        contract['payments'] = rv
+    finally:
+        cursor.close()
+    pass
+     
 
 
 def runInConnection(func):
@@ -72,6 +161,11 @@ def runInConnection(func):
     finally:
         conn.commit()
         conn.close
+
+@app.route("/api/listInterestRates")
+def listInterestRates():
+    offers = runInConnection(lambda conn: selectAllInterestRates(conn))
+    return jsonify(offers)
 
 @app.route("/api/listOffers")
 def listOffers():
@@ -83,9 +177,48 @@ def listContracts():
     contracts = runInConnection(lambda conn: selectAllContracts(conn))
     return jsonify(contracts)
 
+@app.route('/api/getContractDetails/<contractPath>')
+def getContractDetails(contractPath):
+    contracts = runInConnection(lambda conn: selectContractDetails(conn,contractPath))
+    return jsonify(contracts)
+
+@app.route("/api/addInterestRate", methods=['POST'])
+def addInterestRate():
+    data = request.json
+    data["validForDate"] = data["validForDate"][:10]
+    data["interestRate"] = str(data["interestRate"])
+    d = { "validatingPeers" : ["ALL"],"proposal": {
+            "moduleId": "irs",
+            "contractId": "addInterestRate",
+            "parameters": valuesToString(data)
+        } 
+    } 
+    print(d)
+    url = "http://%s:%d/api/runContract"%(HOST_NAME,APP_PORT)
+    print("Calling URL ["+url+"]")
+    response = requests.post(url, json=d)
+    return jsonify(response.json())
+
+@app.route("/api/checkForPayments", methods=['POST'])
+def checkForPayments():
+    data = request.json
+    d = { "validatingPeers" : [data["sellerId"],data["buyerId"]],"proposal": {
+            "moduleId": "irs",
+            "contractId": "checkForPayments",
+            "parameters": valuesToString(data)
+        } 
+    } 
+    print(d)
+    url = "http://%s:%d/api/runContract"%(HOST_NAME,APP_PORT)
+    print("Calling URL ["+url+"]")
+    response = requests.post(url, json=d)
+    return jsonify(response.json())
+
 @app.route("/api/addOffer", methods=['POST'])
 def addOffer():
     data = request.json
+    data["startDate"] = data["startDate"][:10]
+    data["maturityDate"] = data["maturityDate"][:10]
     print("Add Offer called %s %s \n"%(data["buyerId"],data["sellerId"]))
     if (data["buyerId"] != APP_NODE_NAME) and (data["sellerId"] != APP_NODE_NAME):
         return jsonify({"status":"error","errorMessage":"Neither buyerId=%s or sellerId=%s matches APP_NODE=%s"%(data["buyerId"],data["sellerId"],APP_NODE_NAME)})
@@ -93,7 +226,7 @@ def addOffer():
     d = { "validatingPeers" : [data["buyerId"],data["sellerId"]],"proposal": {
             "moduleId": "irs",
             "contractId": "proposeContract",
-            "parameters": data
+            "parameters": valuesToString(data)
         } 
     } 
     print(d)
@@ -108,6 +241,9 @@ def getSchema():
     print("Calling URL ["+url+"]")
     response = requests.get(url)
     return jsonify(response.json())
+
+
+
 
 @app.route('/api/getTable/<tableName>')
 def getTable(tableName):

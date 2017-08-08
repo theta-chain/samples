@@ -1,67 +1,41 @@
 <div class="panel panel-default">
 	<div class="panel-heading">
 		Offers
-		<button class="primary-button" md-raised-button 
+		<button class="btn pull-right btn-warning btn-sm" type="submit"
 			(click)="newTrade()">New Trade</button>
 	</div>
 	<div class="panel-body" style="overflow-x: auto;">
-		<table class="table" id="tblOffers">
-			<tbody>
-				<tr *ngFor="let offer of offers">
+		<table class="table table-responsive" id="tblOffers">
+			<thead>
+				<tr>
+					<th></th>
+					<th>Proposed By</th>
+					<th>Contract Identity</th>
+					<th>Period</th>
+					<th>Terms</th>
+				</tr>
+			</thead>
+			<tbody *ngFor="let offer of offers">
+				<tr class="active">
+					<td><button class="btn btn-sm btn-warning"
+							*ngIf="offer.proposedBy == appState.NodeName"
+							(click)="proposeEdits(offer)">Edit</button></td>
+					<td>{{offer.proposedBy}}</td>
 					<td>
-						<div class="cellContainer">
-							<div>
-								<label style="margin-bottom: 20px">Proposed
-									By:</label> {{offer.proposedBy}}
-							</div>
-							<div>
-								<button   md-raised-button
-									*ngIf="offer.proposedBy == appState.NodeName"
-									(click)="proposeEdits(offer)">Edit</button>
-							</div>
-						</div>
+						<div>Contract Id: {{offer.contractId}}</div>
+						<div>Buyer Id: {{offer.buyerId}}</div>
+						<div>Seller Id: {{offer.sellerId}}</div>
 					</td>
 					<td>
-						<div class="cellContainer">
-							<div>
-								<label>Contract Id:</label> {{offer.contractId}}
-							</div>
-							<div>
-								<label>Buyer Id:</label> {{offer.buyerId}}
-							</div>
-							<div>
-								<label>Seller Id:</label> {{offer.sellerId}}
-							</div>
-						</div>
+						<div>Start Date: {{offer.startDate}}</div>
+						<div>Maturity Date: {{offer.maturityDate}}</div>
+						<div>Coupon Frequency: {{offer.couponFreq}}</div>
 					</td>
 					<td>
-						<div class="cellContainer">
-							<div>
-								<label>Start Date:</label> {{offer.startDate| date: 'MM/dd/yyyy'}}
-							</div>
-							<div>
-								<label>Maturity Date:</label> {{offer.maturityDate| date: 'MM/dd/yyyy'}}
-							</div>
-							<div>
-								<label>Coupon Freq:</label> {{offer.couponFreq}}
-							</div>
-						</div>
-					</td>
-					<td>
-						<div class="cellContainer">
-							<div>
-								<label>Notional Amt:</label> {{offer.notionalAmount|number: '3.2-4'}}
-							</div>
-							<div>
-								<label>Fixed Rate:</label> {{offer.fixedLegRate|number: '1.2-4'}}
-							</div>
-							<div>
-								<label>Index:</label> {{offer.floatingRateIndex}}
-							</div>
-							<div>
-								<label>Spread:</label> {{offer.spread|number: '1.2-4'}}
-							</div>
-						</div>
+						<div>Notional Amt: {{offer.notionalAmount}}</div>
+						<div>Fixed Rate: {{offer.fixedLegRate}}</div>
+						<div>Floating Rate Index: {{offer.floatingRateIndex}}</div>
+						<div>Spread: {{offer.spread}}</div>
 					</td>
 				</tr>
 			</tbody>

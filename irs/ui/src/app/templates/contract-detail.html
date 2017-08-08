@@ -1,0 +1,83 @@
+<ol class="breadcrumb">
+	<li><a href="#/irs">Contracts</a></li>
+	<li class="active" *ngIf="contract">Contract Id: {{contract.contractId}}</li>
+</ol>
+<div class="panel panel-default">
+	<div class="panel-heading">
+		Contract Details
+		<button class="primary-button" md-raised-button (click)="checkForPayments()">Check For Payment</button>
+	</div>
+	<div class="panel-body" *ngIf="contract">
+		<table class="table table-striped" id="tblContracts" >
+			<tbody>
+				<tr>
+					<td>
+						<div>
+							<label>Contract Id:</label> {{contract.contractId}}
+						</div>
+						<div>
+							<label>Buyer Id:</label> {{contract.buyerId}}
+						</div>
+						<div>
+							<label>Seller Id:</label> {{contract.sellerId}}
+						</div>
+					</td>
+					<td>
+						<div>
+							<label>Start Date:</label> {{contract.startDate| date: 'MM/dd/yyyy'}}
+						</div>
+						<div>
+							<label>Maturity Date:</label> {{contract.maturityDate| date: 'MM/dd/yyyy'}}
+						</div>
+						<div>
+							<label>Coupon Freq:</label> {{contract.couponFreq}}
+						</div>
+						<div>
+							<label>Next Payment:</label> {{contract.nextPaymentDate| date: 'MM/dd/yyyy'}}
+						</div>
+						<div>
+							<label>Prev Payment:</label> <span *ngIf="contract.prevPaymentDate != 'None'">{{contract.prevPaymentDate| date: 'MM/dd/yyyy'}}</span>
+						</div>
+					</td>
+					<td>
+						<div>
+							<label>Notional Amt:</label> {{contract.notionalAmount|number: '3.2-4'}}
+						</div>
+						<div>
+							<label>Fixed Rate:</label> {{contract.fixedLegRate|number: '1.2-4'}}
+						</div>
+						<div>
+							<label>Index:</label> {{contract.floatingRateIndex}}
+						</div>
+						<div>
+							<label>Spread:</label> {{contract.spread|number: '1.2-4'}}
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div class="panel-heading">Payment Details</div>
+	<div class="panel-body" style="overflow-x: auto;" *ngIf="contract">
+		<table class="table table-responsive">
+			<thead>
+				<tr class="active">
+					<th>Payment Date</th>
+					<th>Fixed Leg Amount</th>
+					<th>Float Leg Amount</th>
+					<th>Net Amount</th>
+				</tr>
+			</thead>
+			<tbody *ngFor="let payment of contract.payments">
+				<tr>
+					<td>{{payment.paymentDueDate| date: 'MM/dd/yyyy'}}</td>
+					<td>{{payment.fixedLegAmount|number: '1.2-4'}}</td>
+					<td>{{payment.floatLegAmount|number: '1.2-4'}}</td>
+					<td>{{payment.netAmount|number: '1.2-4'}}</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</div>
+
+</div>

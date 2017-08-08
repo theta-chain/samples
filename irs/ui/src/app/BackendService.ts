@@ -1,12 +1,45 @@
 import {Injectable, OnInit} from '@angular/core';
 import {Headers, Http} from '@angular/http';
-import {Offer, Contract} from './objects';
+import {Offer, Contract, InterestRate} from './objects';
 import {DBSchema, DBTable, DBColumn, TableData} from './DBState.component';
 
 import 'rxjs/add/operator/toPromise';
 
 
 const APPLICATION_TYPE_JSON = new Headers({'Content-Type': 'application/json'});
+
+
+export class AppState {
+  NodeName: string;
+  Peers: PeerNode[];
+  LastBlock: string;
+  LastBlockTime: string;
+  Modules: string[];
+}
+
+export class PeerNode {
+  ExternalAppPort: number;
+  ExternalIpAddress: string;
+  ExternalNodePort: number;
+  NodeName: string;
+  PubKey: string;
+}
+
+export class TableChange {
+  rowHash: string[];
+  tableHash: string;
+  tableId: string;
+}
+export class WriteSet {
+  WriteSetHash: string;
+  tableChanges: TableChange[];
+}
+
+export class Transaction {
+  AsOf: Number;
+  WriteSet: WriteSet;
+}
+
 
 @Injectable()
 export class BackendService implements OnInit {
@@ -26,6 +59,14 @@ export class BackendService implements OnInit {
     return this.http.get('/api/getTable/' + tableName)
       .toPromise()
       .then(response => response.json().returnValue as TableData)
+      .catch(this.handleError);
+  }
+
+  getInterestRateList(): Promise<InterestRate[]> {
+    // return Promise.resolve(offers);
+    return this.http.get('/api/listInterestRates')
+      .toPromise()
+      .then(response => response.json() as InterestRate[])
       .catch(this.handleError);
   }
 
@@ -63,6 +104,13 @@ export class BackendService implements OnInit {
       .catch(this.handleError);
   }
 
+  getContractForPath(contractPath: string): Promise<Contract> {
+    return this.http.get('/api/getContractDetails/' + contractPath)
+      .toPromise()
+      .then(response => response.json() as Contract)
+      .catch(this.handleError);
+  }
+
   processStateResponse(appState: AppState): AppState {
     this.appState.NodeName = appState.NodeName;
     this.appState.Peers = appState.Peers;
@@ -81,22 +129,43 @@ export class BackendService implements OnInit {
   }
 
   fireEvent(eventName: string) {
-    let tmp: Array<Function> = this.listeners[eventName];
+    /*
+    const tmp: Array<Function> = this.listeners[eventName];
     if (tmp != null) {
-      for (let func of tmp) {
+      for (const func of tmp) {
         func();
       }
     }
+     */
   }
 
   toOfferArray(json: any): Offer[] {
-    let rv: Offer[] = json as Offer[]
+    const rv: Offer[] = json as Offer[];
     return rv;
   }
 
   addNewOffer(o: Offer): Promise<any> {
     return this.http
       .post('/api/addOffer', JSON.stringify(o), {headers: APPLICATION_TYPE_JSON})
+      .toPromise()
+      .catch(this.handleError);
+  }
+
+  addNewRate(ir: InterestRate): Promise<any> {
+    return this.http
+      .post('/api/addInterestRate', JSON.stringify(ir), {headers: APPLICATION_TYPE_JSON})
+      .toPromise()
+      .catch(this.handleError);
+  }
+
+  checkForPayments(c: Contract): Promise<any> {
+    const input: any = {
+      'buyerId': c.buyerId,
+      'sellerId': c.sellerId,
+      'contractId': c.contractId
+    };
+    return this.http
+      .post('/api/checkForPayments', JSON.stringify(input), {headers: APPLICATION_TYPE_JSON})
       .toPromise()
       .catch(this.handleError);
   }
@@ -114,35 +183,4 @@ export class BackendService implements OnInit {
     this.loadState();
   }
 
-}
-
-export class AppState {
-  NodeName: string;
-  Peers: PeerNode[];
-  LastBlock: string;
-  LastBlockTime: string;
-  Modules: string[];
-}
-
-export class PeerNode {
-  ExternalAppPort: number;
-  ExternalIpAddress: string;
-  ExternalNodePort: number;
-  NodeName: string;
-  PubKey: string;
-}
-
-export class TableChange {
-    rowHash: string[];
-    tableHash: string;
-    tableId: string;
-}
-export class WriteSet {
-  WriteSetHash: string;
-  tableChanges: TableChange[];
-}
-
-export class Transaction {
-  AsOf:Number;
-  WriteSet: WriteSet;
 }

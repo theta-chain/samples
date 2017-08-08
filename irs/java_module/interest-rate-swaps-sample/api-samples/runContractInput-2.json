@@ -1,0 +1,21 @@
+{
+	"validatingPeers": ["node1","node2"],
+	"proposal": {
+		"contractId": "proposeContract",
+		"moduleId" : "irs",
+		"parameters": {
+			"buyerId": "node1",
+			"sellerId": "node2",
+			"contractId": "10",
+			"couponFreq": "Monthly",
+			"fixedLegRate": "3.5",
+			"floatingRateIndex": "LIBOR",
+			"maturityDate": "2017-06-30",
+			"startDate": "2016-07-01",
+			"proposedBy": "node2",
+			"notionalAmount": "10000000",
+			"spread": "0.5",
+			"status": "OPEN"
+		}
+	}
+}

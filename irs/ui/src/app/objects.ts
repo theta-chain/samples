@@ -8,11 +8,11 @@ export class Offer {
   floatingRateIndex: string;
   spread: string;
   notionalAmount: string;
-  startDate: string;
-  maturityDate: string;
+  startDate: Date;
+  maturityDate: Date;
   couponFreq: string;
   status: string;
-};
+}
 
 
 export class Contract {
@@ -23,11 +23,17 @@ export class Contract {
   fixedLegRate: string;
   floatingRateIndex: string;
   spread: string;
-  notionalAmount: string;
-  startDate: string;
-  maturityDate: string;
+  notionalAmount: number;
+  startDate: Date;
+  maturityDate: Date;
   couponFreq: string;
+  nextPaymentDueDate: Date;
 }
 
-
+export class InterestRate {
+  indexName: string;
+  period: string;
+  interestRate: number;
+  validForDate: Date;
+}
 

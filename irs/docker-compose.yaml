@@ -1,7 +1,6 @@
 version: '3'
 services:
   node1:
-    container_name: node1
     image: thetachain/alpha:latest
     environment:
      - IS_FIRST_NODE=true
@@ -11,12 +10,10 @@ services:
      - "5520:5520"
      - "5521:5521"
      - "5522:5522"
-     - "5530:5530"
     volumes:
      - ./data/node1:/usr/local/thetachain/env
      - ./java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
   node2:
-    container_name: node2
     image: thetachain/alpha:latest
     environment:
      - CONNECT_TO_NODE=true
@@ -27,9 +24,45 @@ services:
      - "4420:5520"
      - "4421:5521"
      - "4422:5522"
-     - "4430:5530"
     volumes:
      - ./data/node2:/usr/local/thetachain/env
      - ./java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
     links:
     - node1
+  node3:
+    image: thetachain/alpha:latest
+    environment:
+     - CONNECT_TO_NODE=true
+     - CLUSTER_ADDR=node1:5521
+     - NODE_NAME=node3
+     - DEBUG_CONTRACTS=true
+    ports:
+     - "3320:5520"
+     - "3321:5521"
+     - "3322:5522"
+    volumes:
+     - ./data/node3:/usr/local/thetachain/env
+     - ./java_module/interest-rate-swaps-sample/target/classes:/usr/local/thetachain/env/debug_modules/irs
+    links:
+    - node1
+  node1pyserver:
+    image: thetachain/demo-be:latest
+    command: python irs_be.py 5000 node1 5520 5521 interest-rate-swap-sample-0.1.1.jar
+    ports:
+     - "15001:5000"
+    links:
+    - node1
+  node2pyserver:
+    image: thetachain/demo-be:latest
+    command: python irs_be.py 5000 node2 5520 5521 
+    ports:
+     - "15002:5000"
+    links:
+    - node2
+  node3pyserver:
+    image: thetachain/demo-be:latest
+    command: python irs_be.py 5000 node3 5520 5521 
+    ports:
+     - "15003:5000"
+    links:
+    - node3

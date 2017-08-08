@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Offer } from './objects';
-import { BackendService, AppState } from './BackendService';
+import {Component, OnInit} from '@angular/core';
+import {Offer} from './objects';
+import {BackendService, AppState} from './BackendService';
+import {OfferDlgComponent} from './OfferDlgComponent';
+import {MdDatepickerModule, MdDialog, MdButtonModule} from '@angular/material';
 
 declare function openDialog(dialogName: string): any;
 declare function closeDialog(dialogName: string): any;
@@ -14,42 +16,41 @@ export class OpenOffersComponent implements OnInit {
   modalAction: Function = null;
   appState: AppState;
   offers: Offer[] = null;
-  constructor(private backendService: BackendService) { }
+  constructor(private backendService: BackendService, private dialog: MdDialog) {}
 
   newTrade(): void {
-    let tmpOffer: Offer = new Offer();
+    const tmpOffer: Offer = new Offer();
     tmpOffer.buyerId = '';
     tmpOffer.sellerId = '';
     tmpOffer.contractId = '0';
     tmpOffer.couponFreq = 'Monthly';
     tmpOffer.fixedLegRate = '3.5';
     tmpOffer.floatingRateIndex = 'LIBOR';
-    tmpOffer.maturityDate = '2017-06-30';
-    tmpOffer.startDate = '2016-07-01';
+    tmpOffer.maturityDate = new Date('06/30/2017');
+    tmpOffer.startDate = new Date('07/01/2016');
     tmpOffer.proposedBy = this.appState.NodeName;
     tmpOffer.notionalAmount = '10000000';
     tmpOffer.spread = '0.5';
     tmpOffer.status = 'OPEN';
-    this.showModal(tmpOffer, (o: Offer) => this.addNewOffer(o));
+    this.showModal(tmpOffer);
   }
 
-  addNewOffer(o: Offer) {
-    this.backendService.addNewOffer(o).then((o2: any) => {
-      let retVal: any = o2.json();
-      // alert("return = "+JSON.stringify(retVal))
-      if (retVal.status !== 'status') {
-        alert(retVal.errorMessage);
-      }
-      this.refreshOffers();
-      this.backendService.fireEvent('refreshAll');
+
+  showModal(offer: Offer): void {
+    const dataChannel: any = {
+      'offer': offer,
+      'peers': this.appState.Peers
+    };
+    const dialogRef = this.dialog.open(OfferDlgComponent, {
+      data: dataChannel
     });
-  }
-
-
-  showModal(offer: Offer, modalAction: Function): void {
-    Object.assign(this.modalOffer, offer);
-    this.modalAction = modalAction;
-    openDialog('#newTrade');
+    dataChannel.dialogRef = dialogRef;
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.refreshOffers();
+        this.backendService.fireEvent('refreshAll');
+      }
+    });
   }
 
   refreshOffers(): void {
@@ -57,7 +58,7 @@ export class OpenOffersComponent implements OnInit {
   }
 
   processOffers(offers: Offer[]): void {
-    for (let offer of offers) {
+    for (const offer of offers) {
       offer.counterParty = this.getCounterParty(offer);
     }
     offers.sort((a: Offer, b: Offer): number => {
@@ -85,8 +86,9 @@ export class OpenOffersComponent implements OnInit {
     this.refreshOffers();
   }
   proposeEdits(offer: Offer): void {
-    offer.proposedBy = this.appState.NodeName;
-    this.showModal(offer, (o: Offer) => this.addNewOffer(o));
+    const tmpOffer: Offer = Object.assign({}, offer);
+    tmpOffer.proposedBy = this.appState.NodeName;
+    this.showModal(tmpOffer);
   }
 }
 

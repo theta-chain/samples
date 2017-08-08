@@ -1,0 +1,12 @@
+{
+	"validatingPeers": ["node1","node2"],
+	"proposal": {
+		"contractId": "checkForPayments",
+		"moduleId" : "irs",
+		"parameters": {
+			"buyerId": "node1",
+			"sellerId": "node2",
+			"contractId": "10"
+		}
+	}
+}

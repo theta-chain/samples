@@ -1,11 +1,14 @@
 package com.thetachain.samples.irs;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -23,15 +26,20 @@ public class IRSChainCode {
     private static final Logger logger = LoggerFactory.getLogger(IRSChainCode.class);
     private static final String FIND_PROPOSAL_WITH_PK_SQL = "SELECT * FROM BLOCKCHAIN.IRS_CONTRACT_PROPOSAL  WHERE CONTRACT_ID = ?  AND BUYER_ID = ? AND SELLER_ID = ? AND PROPOSED_BY = ?";
     private static final String FIND_CONTRACT_WITH_PK_SQL = "SELECT * FROM BLOCKCHAIN.IRS_CONTRACT  WHERE CONTRACT_ID = ?  AND BUYER_ID = ? AND SELLER_ID = ? ";
-    private static final String FIND_INTEREST_RATE_WITH_PK_SQL = "SELECT * FROM BLOCKCHAIN.IRS_INTEREST_RATE  WHERE INDEX_NAME = ? AND VALID_FOR_DATE = ?";
+    private static final String FIND_INTEREST_RATE_WITH_PK_SQL = "SELECT INTEREST_RATE FROM BLOCKCHAIN.IRS_INTEREST_RATE  WHERE INDEX_NAME = ? AND PERIOD = ? AND VALID_FOR_DATE = ?";
+    private static final String INSERT_INTEREST_RATE_SQL = "INSERT INTO BLOCKCHAIN.IRS_INTEREST_RATE (INDEX_NAME, PERIOD, INTEREST_RATE , VALID_FOR_DATE ) VALUES(?,?, ?,?)";
 
     @ThetaEndPoint("addInterestRate")
     public void addInterestRate(ThetaContext ctx, Map<String, String> params) throws Exception {
-	IRSInterestRate rate = new IRSInterestRate();
-	setValues(params, new SimpleDateFormat("yyyy-MM-dd"), rate);
-	ctx.insert(rate);
+	try (PreparedStatement pstmt = ctx.getDBConnection().prepareStatement(INSERT_INTEREST_RATE_SQL)) {
+	    pstmt.setString(1, params.get("indexName"));
+	    pstmt.setString(2, params.get("period"));
+	    pstmt.setString(3, params.get("interestRate"));
+	    pstmt.setString(4, params.get("validForDate"));
+	    pstmt.executeUpdate();
+	}
     }
-    
+
     @ThetaEndPoint("proposeContract")
     public void processProposal(ThetaContext ctx, Map<String, String> params) throws Exception {
 	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -65,30 +73,46 @@ public class IRSChainCode {
 	    // We are done
 	}
     }
-    
+
     @ThetaEndPoint("checkForPayments")
-    public String checkForPayments(ThetaContext ctx, Map<String, String> params) throws Exception {
-	IRSContract contract = findContract(ctx,params.get("contractId"),params.get("buyerId"),params.get("sellerId"));
+    public void checkForPayments(ThetaContext ctx, Map<String, String> params) throws Exception {
+	IRSContract contract = findContract(ctx, params.get("contractId"), params.get("buyerId"),
+		params.get("sellerId"));
 	Date nextPaymentDate = contract.getNextPaymentDate();
-	String indexName = contract.getFloatingRateIndex()+"-"+contract.getCouponFrequency();
-	IRSInterestRate rate = findInterestRate(ctx, indexName, nextPaymentDate);
-	if ( rate == null ) {
-	    String msg =  "No Interest Rate for "+indexName+":"+nextPaymentDate;
-	    logger.error(msg);
-	    return msg;
+	BigDecimal floatInterest = findInterestRate(ctx, contract.getFloatingRateIndex(), contract.getCouponFrequency(), nextPaymentDate);
+	if (floatInterest == null) {
+	    throw new IllegalStateException("No Interest Rate for " + contract.getFloatingRateIndex() +":"+ contract.getCouponFrequency() + ":" + nextPaymentDate);
 	}
 	BigDecimal percentOfDays = new BigDecimal(0);
 	Date lastPaymentDate = contract.getPrevPaymentDate();
 	lastPaymentDate = lastPaymentDate == null ? contract.getStartDate() : lastPaymentDate;
-	int noOfDays = getDateDiff(nextPaymentDate,lastPaymentDate);
-	BigDecimal val = rate.getInterestRate();
-	return "";
+	int noOfDays = getDateDiff(nextPaymentDate, lastPaymentDate);
+	floatInterest.add(contract.getFloatingRateSpread());
+	BigDecimal fixedInterest = contract.getFixedLegRate();
+	BigDecimal fraction = new BigDecimal(noOfDays);
+	fraction.setScale(6, RoundingMode.HALF_EVEN);
+	fraction = fraction.divide(new BigDecimal("365.0000"), MathContext.DECIMAL128);
+	fraction = fraction.multiply(contract.getNotionalAmount());
+	fraction = fraction.divide(new BigDecimal("100.0000"), MathContext.DECIMAL128);
+	BigDecimal floatAmt = floatInterest.multiply(fraction);
+	BigDecimal fixedAmt = fixedInterest.multiply(fraction);
+	BigDecimal netPayment = fixedAmt.subtract(floatAmt);
+	IRSContractFlow flow = new IRSContractFlow();
+	flow.setBuyerId(contract.getBuyerId());
+	flow.setSellerId(contract.getSellerId());
+	flow.setContractId(contract.getContractId());
+	flow.setPaymentDueDate(nextPaymentDate);
+	flow.setFixedLegAmount(fixedAmt);
+	flow.setFloatLegAmount(floatAmt);
+	flow.setNetPayment(netPayment);
+	setNextPaymentDate(contract);
+	ctx.update(contract);
+	ctx.insert(flow);
     }
 
-
     private int getDateDiff(Date d1, Date d2) {
-	long diff = d2.toInstant().until(d1.toInstant(),ChronoUnit.DAYS);
-	return (int)diff;
+	long diff = d2.toInstant().until(d1.toInstant(), ChronoUnit.DAYS);
+	return (int) diff;
     }
 
     private boolean matches(IRSContractProposal p, IRSContractProposal cp) {
@@ -117,11 +141,6 @@ public class IRSChainCode {
     }
 
     private IRSContract createContract(IRSContractProposal proposal) {
-	Calendar c = Calendar.getInstance();
-	c.setTime(proposal.getStartDate());
-	if ("Monthly".equals(proposal.getCouponFrequency())) {
-	    c.roll(Calendar.MONTH, 1);
-	}
 	IRSContract rv = new IRSContract();
 	rv.setBuyerId(proposal.getBuyerId());
 	rv.setContractId(proposal.getContractId());
@@ -130,11 +149,27 @@ public class IRSChainCode {
 	rv.setFloatingRateIndex(proposal.getFloatingRateIndex());
 	rv.setFloatingRateSpread(proposal.getFloatingRateSpread());
 	rv.setMaturityDate(proposal.getMaturityDate());
-	rv.setNextPaymentDate(c.getTime());
 	rv.setNotionalAmount(proposal.getNotionalAmount());
 	rv.setSellerId(proposal.getSellerId());
 	rv.setStartDate(proposal.getStartDate());
+	setNextPaymentDate(rv);
 	return rv;
+    }
+
+    private void setNextPaymentDate(IRSContract contract) {
+	Calendar c = Calendar.getInstance();
+	if (contract.getNextPaymentDate() != null) {
+	    c.setTime(contract.getNextPaymentDate());
+	} else {
+	    c.setTime(contract.getStartDate());
+	}
+	if ("Monthly".equals(contract.getCouponFrequency())) {
+	    c.roll(Calendar.MONTH, 1);
+	}
+	if (contract.getNextPaymentDate() != null) {
+	    contract.setPrevPaymentDate(contract.getNextPaymentDate());
+	}
+	contract.setNextPaymentDate(c.getTime());
     }
 
     private void setValues(Map<String, String> params, SimpleDateFormat sdf, IRSContractProposal proposal)
@@ -153,40 +188,33 @@ public class IRSChainCode {
 	proposal.setStatus(params.get("status"));
     }
 
-    private void setValues(Map<String, String> params, SimpleDateFormat sdf, IRSContractPayment payment)
-	    throws ParseException {
-	payment.setContractId(params.get("contractId"));
-	payment.setPaymentAmount(new BigDecimal(params.get("paymentAmount")));
-	payment.setPaymentDueDate(sdf.parse(params.get("paymentDueDate")));
-	payment.setProposedBy(params.get("proposedBy"));
-	payment.setReferenceId(params.get("referenceId"));
-	payment.setRemittanceDate(sdf.parse(params.get("remittanceDate")));
-    }
-
-    private void setValues(Map<String, String> params, SimpleDateFormat sdf, IRSInterestRate interestRate)
-	    throws ParseException {
-	interestRate.setIndexName(params.get("indexName"));
-	interestRate.setInterestRate(new BigDecimal(params.get("interestRate")));
-	interestRate.setValidForDate(sdf.parse(params.get("validForDate")));
-    }
-
     private IRSContractProposal findProposal(ThetaContext ctx, String contractId, String buyerId, String sellerId,
 	    String proposedBy) throws SQLException {
-	List<IRSContractProposal> tmp = ctx.runPreparedQuery(FIND_PROPOSAL_WITH_PK_SQL, IRSContractProposal.class, contractId,
-		buyerId, sellerId, proposedBy);
+	List<IRSContractProposal> tmp = ctx.runPreparedQuery(FIND_PROPOSAL_WITH_PK_SQL, IRSContractProposal.class,
+		contractId, buyerId, sellerId, proposedBy);
 	return tmp == null || tmp.size() == 0 ? null : tmp.get(0);
     }
 
-    private IRSContract findContract(ThetaContext ctx, String contractId, String buyerId, String sellerId) throws SQLException {
-	List<IRSContract> tmp = ctx.runPreparedQuery(FIND_CONTRACT_WITH_PK_SQL, IRSContract.class, contractId,
-		buyerId, sellerId);
+    private IRSContract findContract(ThetaContext ctx, String contractId, String buyerId, String sellerId)
+	    throws SQLException {
+	List<IRSContract> tmp = ctx.runPreparedQuery(FIND_CONTRACT_WITH_PK_SQL, IRSContract.class, contractId, buyerId,
+		sellerId);
 	return tmp == null || tmp.size() == 0 ? null : tmp.get(0);
     }
 
-    private IRSInterestRate findInterestRate(ThetaContext ctx, String indexName,Date validForDate) throws SQLException {
-	List<IRSInterestRate> tmp = ctx.runPreparedQuery(FIND_INTEREST_RATE_WITH_PK_SQL, IRSInterestRate.class, indexName,
-		validForDate);
-	return tmp == null || tmp.size() == 0 ? null : tmp.get(0);
+    private BigDecimal findInterestRate(ThetaContext ctx, String indexName, String period, Date validForDate) throws SQLException {
+	try (PreparedStatement pstmt = ctx.getDBConnection().prepareStatement(FIND_INTEREST_RATE_WITH_PK_SQL)) {
+	    pstmt.setString(1, indexName);
+	    pstmt.setString(2, period);
+	    pstmt.setDate(3, new java.sql.Date(validForDate.getTime()));
+	    try (ResultSet rs = pstmt.executeQuery()) {
+		if (rs.next()) {
+		    return rs.getBigDecimal(1);
+		} else {
+		    return null;
+		}
+	    }
+	}
     }
 
 }

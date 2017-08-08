@@ -1,0 +1,30 @@
+<div class="newInterestRateDialog">
+	<h2 md-dialog-title>Add Interest Rate</h2>
+	<md-dialog-content>
+	<div>
+		<md-input-container> <input mdInput [(ngModel)]="interestRate.indexName" placeholder="Index Name"> </md-input-container>
+	</div>
+	<div>
+		<md-select placeholder="Frequency" [(ngModel)]="interestRate.period"> <md-option value="Monthly">Monthly</md-option> <md-option value="Quarterly">Quarterly</md-option> <md-option
+			value="Half-Yearly">Half-Yearly</md-option> <md-option value="Yearly">Yearly</md-option> </md-select>
+	</div>
+	<div>
+		<md-input-container> <input mdInput [(ngModel)]="interestRate.validForDate" [mdDatepicker]="myDatepicker">
+		<button mdSuffix [mdDatepickerToggle]="myDatepicker"></button>
+		</md-input-container>
+		<md-datepicker #myDatepicker></md-datepicker>
+	</div>
+
+	<div>
+		<md-input-container> <input mdInput [(ngModel)]="interestRate.interestRate"> </md-input-container>
+
+	</div>
+	</md-dialog-content>
+	<md-dialog-actions>
+	<button md-button (click)="addInterestRate()">Add</button>
+	<button md-button [md-dialog-close]="false">Cancel</button>
+	<div style="width: 100%" *ngIf="showProgress">
+		<md-progress-bar [color]="'warn'" [mode]="'indeterminate'" ></md-progress-bar>
+	</div>
+	</md-dialog-actions>
+</div>
